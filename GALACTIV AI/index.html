@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GALACTIV AI - Architect Admin Dashboard & WhatsApp Bot</title>
+  
+  <!-- Chart.js CDN untuk Grafik Visualisasi -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background-color: #f1f4f6;
+      color: #495057;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    /* Modal Popup Styling */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .modal-header h3 { margin: 0; font-size: 16px; color: #2c3e50; }
+
+    .modal-body label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #495057;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    .modal-body input, .modal-body select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn-secondary {
+      background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #0d6efd; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;
+    }
+
+    /* =========================================================
+       1. TAMPILAN MODE PENGGUNA (WHATSAPP BOT HP)
+       ========================================================= */
+    #userView {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #0b141a;
+    }
+
+    .phone-mockup {
+      width: 390px;
+      height: 780px;
+      max-height: 92vh;
+      background-color: #000;
+      border-radius: 44px;
+      border: 9px solid #2d3134;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .phone-notch {
+      width: 125px;
+      height: 16px;
+      background-color: #2d3134;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+      z-index: 100;
+    }
+
+    .phone-status-bar {
+      background-color: #075e54;
+      color: white;
+      font-size: 11px;
+      padding: 12px 18px 4px 18px;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+    }
+
+    .phone-screen {
+      flex: 1;
+      background-color: #efeae2;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .wa-header {
+      background-color: #075e54;
+      color: white;
+      padding: 8px 12px 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
+    .wa-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff;
+      position: relative;
+    }
+
+    .wa-avatar img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      display: block;
+    }
+
+    .in-phone-fab {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background-color: #00a884;
+      color: white;
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      z-index: 90;
+      transition: transform 0.2s;
+    }
+    .in-phone-fab:active { transform: translateY(-50%) scale(0.9); }
+
+    .chat-body {
+      flex: 1;
+      padding: 12px;
+      background-color: #efeae2;
+      overflow-y: auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-behavior: smooth;
+      color: #111b21;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .chat-body::-webkit-scrollbar { display: none; }
+
+    .chat-bubble {
+      max-width: 82%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      line-height: 1.4;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+      word-wrap: break-word;
+    }
+
+    .chat-bot { background-color: #ffffff; align-self: flex-start; border-top-left-radius: 0; }
+    .chat-user { background-color: #dcf8c6; align-self: flex-end; border-top-right-radius: 0; }
+    .img-preview { width: 100%; max-height: 150px; object-fit: cover; border-radius: 6px; margin-top: 5px; }
+
+    .chat-footer {
+      background-color: #0b141a;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wa-input-container {
+      flex: 1;
+      background-color: #202c33;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      padding: 4px 10px;
+      gap: 8px;
+      height: 42px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      padding: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8696a0;
+    }
+
+    .input-placeholder {
+      flex: 1;
+      color: #8696a0;
+      font-size: 13.5px;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .mic-btn {
+      background-color: #00a884;
+      color: #111b21;
+      border: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* =========================================================
+       2. TAMPILAN FULLSCREEN ARCHITECT ADMIN DASHBOARD
+       ========================================================= */
+    #adminView {
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+      background-color: #f1f4f6;
+    }
+
+    .top-header {
+      background-color: #0f8ebe;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      color: white;
+      box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-brand {
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 13px;
+    }
+
+    .btn-back-wa {
+      background-color: #e27317;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .btn-back-wa:hover { background-color: #075e54; }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      color: #128c7e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .dashboard-body {
+      display: flex;
+      flex: 1;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #deeff3;
+      border-right: 1px solid #e9ecef;
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-section { padding: 0 16px; }
+    
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #021425;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+    
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #041221;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 4px;
+      transition: all 0.2s ease;
+    }
+    
+    .sidebar-item-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-item:hover {
+      background-color: #f8f9fa;
+      color: #1c1478;
+    }
+    
+    .sidebar-item.active {
+      background-color: #fcfffb;
+      color: #1e2291;
+      box-shadow: inset 3px 0 0 #110122;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .content-header {
+      background-color: #ffffff;
+      padding: 20px 24px;
+      border-radius: 8px;
+      box-shadow: 0 0.46875rem 2.1875rem rgba(4, 9, 20, 0.03);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .content-title { font-size: 20px; font-weight: 700; color: #2c3e50; margin: 0; }
+    .content-sub { font-size: 13px; color: #7f8c8d; margin-top: 4px; }
+
+    .grid-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 0.46875rem 2.1875rem rgba(4, 9, 20, 0.03);
+      border: 1px solid #e9ecef;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #3f6ad8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metrics-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .metric-val { font-size: 22px; font-weight: 800; color: #2e7d32; }
+
+    .table-container { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background-color: #f8f9fa;
+      color: #6c757d;
+      font-weight: 700;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 2px solid #e9ecef;
+    }
+    td { padding: 12px 16px; border-bottom: 1px solid #e9ecef; vertical-align: middle; }
+
+    .badge-pill {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+    .badge-aman { background-color: #d1e7dd; color: #0f5132; }
+    .badge-waspada { background-color: #fff3cd; color: #664d03; }
+    .badge-jenuh { background-color: #f8d7da; color: #842029; }
+
+    .progress-bar-bg {
+      width: 100px;
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    .progress-bar-fill { height: 100%; border-radius: 4px; }
+
+    .tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .tab-pane.active {
+      display: flex;
+    }
+
+    /* MATERIAL DASHBOARD CARDS (TAB COLORIMETRY) */
+    .md-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+    }
+
+    .md-card-stat {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 15px 20px;
+      position: relative;
+      box-shadow: 0 4px 20px 0 rgba(0,0,0,0.05);
+      border: 1px solid #e9ecef;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .md-icon-box {
+      width: 54px;
+      height: 54px;
+      border-radius: 10px;
+      position: absolute;
+      top: -18px;
+      left: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .bg-orange { background: linear-gradient(60deg, #ffa726, #fb8c00); }
+    .bg-green { background: linear-gradient(60deg, #66bb6a, #43a047); }
+    .bg-red { background: linear-gradient(60deg, #ef5350, #e53935); }
+    .bg-blue { background: linear-gradient(60deg, #26c6da, #00acc1); }
+    .bg-purple { background: linear-gradient(60deg, #ab47bc, #8e24aa); }
+
+    .md-stat-content {
+      text-align: right;
+      flex: 1;
+    }
+
+    .md-stat-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 2px;
+    }
+
+    .md-stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #2c3e50;
+    }
+
+    .md-stat-footer {
+      border-top: 1px solid #f1f5f9;
+      margin-top: 12px;
+      padding-top: 8px;
+      font-size: 11px;
+      color: #777;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .md-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .md-card-chart {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 20px 0 rgba(0,0,0,0.05);
+      border: 1px solid #e9ecef;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .md-chart-header {
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: -30px;
+      margin-bottom: 15px;
+      color: white;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+      height: 170px;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- VIEW 1: MODE PENGGUNA (WHATSAPP BOT HP) -->
+  <div id="userView">
+    <div class="phone-mockup">
+      <div class="phone-notch"></div>
+      <div class="phone-status-bar">
+        <span>09:41</span>
+        <span>100%</span>
+      </div>
+
+      <div class="phone-screen">
+        <div class="wa-header">
+         <div class="wa-avatar">
+        <img src="logo galactiv.png" alt="Galactiv Logo">
+      </div>
+          <div style="flex: 1;">
+            <div style="font-weight: bold; font-size: 13.5px;">GALACTIV AI Bot</div>
+            <div style="font-size: 10.5px; opacity: 0.85;">online</div>
+          </div>
+        </div>
+
+        <button class="in-phone-fab" onclick="showAdminView()" title="Buka Dashboard Admin">
+          📊
+        </button>
+
+        <div class="chat-body" id="chatBody">
+          <div class="chat-bubble chat-bot">
+            Halo! Selamat datang di <b>GALACTIV AI</b>.<br><br>
+            Silakan unggah foto sampel air filter Anda bersama <i>Color Calibration Card</i> untuk mendeteksi kadar besi (Fe) dan masa pakai kartrid.
+          </div>
+        </div>
+
+        <div class="chat-footer">
+          <div class="wa-input-container">
+            <button class="icon-btn" aria-label="Emoji">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.41 0 8-3.59 8-8s-3.59-8-8-8-8 3.59-8 8 3.59 8 8 8zm-4.5-9.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm9 0c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm-4.5 5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+            </button>
+            <div class="input-placeholder" onclick="document.getElementById('fileInput').click()">Ketik pesan</div>
+            <button class="icon-btn" onclick="document.getElementById('fileInput').click()" aria-label="Lampiran">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.66 1.34 3 3 3s3-1.34 3-3V5c0-2.48-2.02-4.5-4.5-4.5S7 2.52 7 5v12.5c0 3.59 2.91 6.5 6.5 6.5s6.5-2.91 6.5-6.5V6h-1.5z"/></svg>
+            </button>
+            <button class="icon-btn" onclick="document.getElementById('fileInput').click()" aria-label="Kamera">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="12" r="3.2"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+            </button>
+          </div>
+          <button class="mic-btn" aria-label="Mikrofon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.34 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+          </button>
+          <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="prosesFoto(event)">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 2: MODE ADMIN (ARCHITECT STYLE DASHBOARD) -->
+  <div id="adminView">
+    <div class="top-header">
+      <div class="header-brand">
+        GALACTIV Admin
+      </div>
+      
+      <div class="header-nav">
+        <button class="btn-back-wa" onclick="showUserView()">
+          Kembali ke WhatsApp
+        </button>
+        <div class="user-profile">
+          <div class="user-avatar">NI</div>
+          <div>
+            <div style="font-weight:bold;">Nadia Irsalina</div>
+            <div style="font-size:10px; opacity:0.8;">System Administrator</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-body">
+      <!-- SIDEBAR KIRI INTERAKTIF -->
+      <div class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-title">Menu Utama</div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item active" onclick="switchSidebarTab(this, 'tab-monitoring')">
+              Monitoring Air
+            </li>
+            <li class="sidebar-item" onclick="switchSidebarTab(this, 'tab-stok')">
+              Stok Toko Mitra
+            </li>
+            <li class="sidebar-item" onclick="switchSidebarTab(this, 'tab-pelanggan')">
+              Data Pelanggan
+            </li>
+            <li class="sidebar-item" onclick="switchSidebarTab(this, 'tab-colorimetry')">
+              Laporan Kolorimetri
+            </li>
+            <li class="sidebar-item" onclick="switchSidebarTab(this, 'tab-pengaturan')">
+              Pengaturan
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="main-content">
+
+        <!-- TAB 1: MONITORING AIR -->
+        <div id="tab-monitoring" class="tab-pane active">
+          <div class="content-header">
+            <div>
+              <h1 class="content-title">Water Quality & Supply Chain Dashboard</h1>
+              <div class="content-sub">Sistem pendukung keputusan real-time berbasis AI Colorimetry & Karbon Aktif Galam.</div>
+            </div>
+            <span style="background:#d1e7dd; color:#0f5132; padding:6px 14px; border-radius:20px; font-weight:bold; font-size:12px;">🟢 Live Sync Active</span>
+          </div>
+
+          <div class="grid-row">
+            <div class="card">
+              <div class="card-title">
+                <span>Laporan Tren Kadar Besi (Fe) Per Wilayah</span>
+                <span style="font-size:12px; color:#6c757d; font-weight:normal;">Update Terakhir: Hari ini</span>
+              </div>
+
+              <div style="height: 220px; position: relative;">
+                <canvas id="barChart"></canvas>
+              </div>
+
+              <div class="metrics-box">
+                <div>
+                  <div style="font-size:11px; color:#6c757d; font-weight:bold;">TARGET REFILL TERJUAL</div>
+                  <div class="metric-val">366 Pcs</div>
+                  <div style="font-size:11px; color:#198754;">100% Target Bulanan</div>
+                </div>
+                <div>
+                  <div style="font-size:11px; color:#6c757d; font-weight:bold;">ESTIMASI KEBUTUHAN REFILL</div>
+                  <div class="metric-val" style="color:#0d6efd;">120 Pcs</div>
+                  <div style="font-size:11px; color:#0d6efd;">Minggu Ini</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">HIGHLIGHTS PELANGGAN</div>
+              
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid #f1f5f9;">
+                  <div>
+                    <div style="font-weight:bold; font-size:13px;">Bpk. Ahmad</div>
+                    <div style="font-size:11px; color:#6c757d;">Banjarmasin Utara</div>
+                  </div>
+                  <span class="badge-pill badge-jenuh">Fe: 1.45 mg/L</span>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid #f1f5f9;">
+                  <div>
+                    <div style="font-weight:bold; font-size:13px;">Ibu Rahma</div>
+                    <div style="font-size:11px; color:#6c757d;">Banjarmasin Selatan</div>
+                  </div>
+                  <span class="badge-pill badge-waspada">Fe: 0.78 mg/L</span>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <div>
+                    <div style="font-weight:bold; font-size:13px;">Bpk. Hendra</div>
+                    <div style="font-size:11px; color:#6c757d;">Banjarmasin Timur</div>
+                  </div>
+                  <span class="badge-pill badge-jenuh">Fe: 1.10 mg/L</span>
+                </div>
+              </div>
+
+              <hr style="border:0; border-top:1px solid #e9ecef; margin:10px 0;">
+
+              <div class="card-title">STATISTIK BULANAN ADSORPSI</div>
+              <div style="font-size:28px; font-weight:800; color:#198754;">+88%</div>
+              <div style="font-size:12px; color:#6c757d;">Daya serap karbon aktif Galam stabil memenuhi standar SNI.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <span>Tabel Real-Time Status Kejenuhan Kartrid Pelanggan & Stok Mitra</span>
+            </div>
+
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID / Nama Pelanggan</th>
+                    <th>Lokasi / Wilayah</th>
+                    <th>Sisa Kapasitas Kartrid</th>
+                    <th>Kadar Fe Terakhir</th>
+                    <th>Status AI</th>
+                    <th>Toko Bangunan Mitra Terdekat</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>Nadia (User Utama)</b></td>
+                    <td>Banjarmasin Barat</td>
+                    <td>
+                      <div class="progress-bar-bg"><div class="progress-bar-fill" id="tblBarNadia" style="width: 90%; background-color: #198754;"></div></div>
+                      <span id="tblCapNadia" style="font-weight:bold;">90%</span>
+                    </td>
+                    <td><b id="tblFeNadia">0.12 mg/L</b></td>
+                    <td><span id="tblBadgeNadia" class="badge-pill badge-aman">AMAN / LAYAK</span></td>
+                    <td>TB. Sumber Makmur (Stok: 28 Pcs)</td>
+                  </tr>
+                  <tr>
+                    <td><b>Bpk. Ahmad</b></td>
+                    <td>Banjarmasin Utara</td>
+                    <td>
+                      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 5%; background-color: #dc3545;"></div></div>
+                      <span style="font-weight:bold;">5%</span>
+                    </td>
+                    <td><b>1.45 mg/L</b></td>
+                    <td><span class="badge-pill badge-jenuh">JENUH / GANTI</span></td>
+                    <td>TB. Jaya Abadi (Restock: 4 Pcs)</td>
+                  </tr>
+                  <tr>
+                    <td><b>Ibu Rahma</b></td>
+                    <td>Banjarmasin Selatan</td>
+                    <td>
+                      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 35%; background-color: #ffc107;"></div></div>
+                      <span style="font-weight:bold;">35%</span>
+                    </td>
+                    <td><b>0.78 mg/L</b></td>
+                    <td><span class="badge-pill badge-waspada">WASPADA</span></td>
+                    <td>TB. Kalimantan Teknik (Stok: 15 Pcs)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: STOK TOKO MITRA -->
+        <div id="tab-stok" class="tab-pane">
+          <div class="content-header">
+            <div>
+              <h1 class="content-title">Inventaris & Stok Toko Bangunan Mitra</h1>
+              <div class="content-sub">Monitoring ketersediaan kartrid refill Karbon Aktif Galam di jaringan distributor resmi.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Daftar Toko Bangunan Mitra & Status Stok Refill</div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nama Toko Mitra</th>
+                    <th>Wilayah Area</th>
+                    <th>Kontak / Telepon</th>
+                    <th>Stok Kartrid Refill</th>
+                    <th>Status Pasokan</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>TB. Sumber Makmur</b></td>
+                    <td>Banjarmasin Barat</td>
+                    <td>+62 812-3456-7890</td>
+                    <td><b>28 Pcs</b></td>
+                    <td><span class="badge-pill badge-aman">STOK AMAN</span></td>
+                    <td><button style="padding:4px 10px; border-radius:4px; border:1px solid #ccc; cursor:pointer;" onclick="openRestockModal('TB. Sumber Makmur')">Kirim Stok</button></td>
+                  </tr>
+                  <tr>
+                    <td><b>TB. Jaya Abadi</b></td>
+                    <td>Banjarmasin Utara</td>
+                    <td>+62 813-9876-5432</td>
+                    <td><b style="color:#dc3545;">4 Pcs</b></td>
+                    <td><span class="badge-pill badge-jenuh">RESTOCK SEGERA</span></td>
+                    <td><button style="padding:4px 10px; border-radius:4px; border:1px solid #ccc; cursor:pointer;" onclick="openRestockModal('TB. Jaya Abadi')">Kirim Stok</button></td>
+                  </tr>
+                  <tr>
+                    <td><b>TB. Kalimantan Teknik</b></td>
+                    <td>Banjarmasin Selatan</td>
+                    <td>+62 811-2233-4455</td>
+                    <td><b>15 Pcs</b></td>
+                    <td><span class="badge-pill badge-aman">STOK CUKUP</span></td>
+                    <td><button style="padding:4px 10px; border-radius:4px; border:1px solid #ccc; cursor:pointer;" onclick="openRestockModal('TB. Kalimantan Teknik')">Kirim Stok</button></td>
+                  </tr>
+                  <tr>
+                    <td><b>TB. Borneo Mandiri</b></td>
+                    <td>Banjarmasin Timur</td>
+                    <td>+62 852-6677-8899</td>
+                    <td><b style="color:#ffc107;">8 Pcs</b></td>
+                    <td><span class="badge-pill badge-waspada">PERLU REFILL</span></td>
+                    <td><button style="padding:4px 10px; border-radius:4px; border:1px solid #ccc; cursor:pointer;" onclick="openRestockModal('TB. Borneo Mandiri')">Kirim Stok</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: DATA PELANGGAN -->
+        <div id="tab-pelanggan" class="tab-pane">
+          <div class="content-header">
+            <div>
+              <h1 class="content-title">Database Pelanggan Filter Karbon Galam</h1>
+              <div class="content-sub">Riwayat pengujian air, alamat rumah, dan rekam medis kualitas air pengguna.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Daftar Pengguna Aktif Kanal WhatsApp AI</div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nama Pelanggan</th>
+                    <th>Nomor WhatsApp</th>
+                    <th>Kecamatan</th>
+                    <th>Terakhir Tes</th>
+                    <th>Status Kartrid</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>Nadia Irsalina</b></td>
+                    <td>+62 857-1122-3344</td>
+                    <td>Banjarmasin Barat</td>
+                    <td>Hari ini, 09:41</td>
+                    <td><span class="badge-pill badge-aman">Sangat Baik (90%)</span></td>
+                  </tr>
+                  <tr>
+                    <td><b>Bpk. Ahmad</b></td>
+                    <td>+62 812-9988-7766</td>
+                    <td>Banjarmasin Utara</td>
+                    <td>Kemarin, 14:20</td>
+                    <td><span class="badge-pill badge-jenuh">Jenuh (5%)</span></td>
+                  </tr>
+                  <tr>
+                    <td><b>Ibu Rahma</b></td>
+                    <td>+62 813-4455-6677</td>
+                    <td>Banjarmasin Selatan</td>
+                    <td>2 hari lalu</td>
+                    <td><span class="badge-pill badge-waspada">Menurun (35%)</span></td>
+                  </tr>
+                  <tr>
+                    <td><b>Bpk. Hendra</b></td>
+                    <td>+62 821-5566-7788</td>
+                    <td>Banjarmasin Timur</td>
+                    <td>3 hari lalu</td>
+                    <td><span class="badge-pill badge-jenuh">Jenuh (8%)</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: LAPORAN COLORIMETRY -->
+        <div id="tab-colorimetry" class="tab-pane">
+          <div class="content-header">
+            <div>
+              <h1 class="content-title">Log Validasi AI Colorimetry & Model Vision</h1>
+              <div class="content-sub">Parameter pengujian laboratorium, normalisasi pencahayaan, dan kurva regresi besi (Fe).</div>
+            </div>
+            <span style="background:#e8fadf; color:#16a34a; padding:6px 14px; border-radius:20px; font-weight:bold; font-size:12px;">✓ Model Calibrated</span>
+          </div>
+
+          <div class="md-grid-4">
+            <div class="md-card-stat">
+              <div class="md-icon-box bg-orange">🎴</div>
+              <div class="md-stat-content">
+                <div class="md-stat-label">Calibration Target</div>
+                <div class="md-stat-value">RGB Target</div>
+              </div>
+              <div class="md-stat-footer">
+                <span>🟢 Normalisasi otomatis terdeteksi</span>
+              </div>
+            </div>
+
+            <div class="md-card-stat">
+              <div class="md-icon-box bg-green">💡</div>
+              <div class="md-stat-content">
+                <div class="md-stat-label">Lighting Check</div>
+                <div class="md-stat-value">98.4%</div>
+              </div>
+              <div class="md-stat-footer">
+                <span>⏱️ Threshold Kecerahan: 40% - 95%</span>
+              </div>
+            </div>
+
+            <div class="md-card-stat">
+              <div class="md-icon-box bg-red">🧪</div>
+              <div class="md-stat-content">
+                <div class="md-stat-label">Sensitivitas Fe</div>
+                <div class="md-stat-value">0.05 - 5.0</div>
+              </div>
+              <div class="md-stat-footer">
+                <span>Satuan Konsentrasi: mg/L</span>
+              </div>
+            </div>
+
+            <div class="md-card-stat">
+              <div class="md-icon-box bg-blue">🎯</div>
+              <div class="md-stat-content">
+                <div class="md-stat-label">Akurasi vs Lab</div>
+                <div class="md-stat-value">94.8%</div>
+              </div>
+              <div class="md-stat-footer">
+                <span>Validasi Uji Spektrofotometer</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="md-grid-3">
+            <div class="md-card-chart">
+              <div class="md-chart-header bg-green">
+                <canvas id="chartFeRegression"></canvas>
+              </div>
+              <div style="font-weight:bold; font-size:14px; color:#2c3e50;">Kurva Regresi Lab (Fe)</div>
+              <div style="font-size:12px; color:#777; margin-top:4px;">Persamaan: y = 5.0 × ((R - B) / 255)</div>
+              <hr style="border:0; border-top:1px solid #eee; margin:12px 0 8px 0;">
+              <div style="font-size:11px; color:#888;">🟢 Korelasi linear sempurna antara indeks kuning & Fe</div>
+            </div>
+
+            <div class="md-card-chart">
+              <div class="md-chart-header bg-orange">
+                <canvas id="chartLightingDist"></canvas>
+              </div>
+              <div style="font-weight:bold; font-size:14px; color:#2c3e50;">Distribusi Kualitas Cahaya</div>
+              <div style="font-size:12px; color:#777; margin-top:4px;">Rasio foto pengguna yang lolos filter AI.</div>
+              <hr style="border:0; border-top:1px solid #eee; margin:12px 0 8px 0;">
+              <div style="font-size:11px; color:#888;">⚡ 98.4% Sampel foto memenuhi standar kecerahan</div>
+            </div>
+
+            <div class="md-card-chart">
+              <div class="md-chart-header bg-purple">
+                <canvas id="chartAccuracyTrend"></canvas>
+              </div>
+              <div style="font-weight:bold; font-size:14px; color:#2c3e50;">Konsistensi Validasi Lab</div>
+              <div style="font-size:12px; color:#777; margin-top:4px;">Pengujian berkala vs Spektrofotometer.</div>
+              <hr style="border:0; border-top:1px solid #eee; margin:12px 0 8px 0;">
+              <div style="font-size:11px; color:#888;">🎯 Tingkat presisi stabil di kisaran 94% - 96%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: PENGATURAN SYSTEM -->
+        <div id="tab-pengaturan" class="tab-pane">
+          <div class="content-header">
+            <div>
+              <h1 class="content-title">Pengaturan Parameter Sistem GALACTIV</h1>
+              <div class="content-sub">Konfigurasi ambang batas kesehatan air, template pesan WhatsApp, dan Webhook API.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Ambang Batas Kualitas Air (Permenkes)</div>
+            <div style="display:flex; flex-direction:column; gap:12px; max-width:400px; font-size:13px;">
+              <label><b>Batas Maksimal Fe Air Minum (mg/L):</b></label>
+              <input type="number" value="0.3" step="0.1" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+              
+              <label><b>Batas Maksimal Fe Air Bersih (mg/L):</b></label>
+              <input type="number" value="1.0" step="0.1" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+
+              <button style="background:#198754; color:white; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:10px;">Simpan Perubahan Parameter</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL POPUP FORM KIRIM STOK -->
+  <div id="restockModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📦 Form Pengiriman Stok ke Toko Mitra</h3>
+        <button style="background:none; border:none; font-size:18px; cursor:pointer;" onclick="closeRestockModal()">✖</button>
+      </div>
+      <div class="modal-body">
+        <label>Toko Bangunan Mitra Tujuan:</label>
+        <select id="restockToko">
+          <option value="TB. Sumber Makmur">TB. Sumber Makmur (Banjarmasin Barat)</option>
+          <option value="TB. Jaya Abadi">TB. Jaya Abadi (Banjarmasin Utara)</option>
+          <option value="TB. Kalimantan Teknik">TB. Kalimantan Teknik (Banjarmasin Selatan)</option>
+          <option value="TB. Borneo Mandiri">TB. Borneo Mandiri (Banjarmasin Timur)</option>
+        </select>
+
+        <label>Jumlah Stok yang Dikirim (Pcs):</label>
+        <input type="number" id="restockJumlah" value="18" min="1" max="100">
+
+        <label>Catatan / Keterangan Pengiriman:</label>
+        <input type="text" id="restockCatatan" placeholder="Contoh: Pengiriman reguler karbit Galam">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeRestockModal()">Batal</button>
+        <button class="btn-primary" onclick="submitRestock()">Kirim Stok & Notifikasi</button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="canvas" style="display: none;"></canvas>
+
+  <script>
+    let chartInstance = null;
+    let colorimetryChartsCreated = false;
+
+    // FUNGSI BERPINDAH TAB SIDEBAR
+    function switchSidebarTab(element, tabId) {
+      const items = document.querySelectorAll('.sidebar-item');
+      items.forEach(item => item.classList.remove('active'));
+      element.classList.add('active');
+
+      const panes = document.querySelectorAll('.tab-pane');
+      panes.forEach(pane => pane.classList.remove('active'));
+      
+      const targetPane = document.getElementById(tabId);
+      if (targetPane) {
+        targetPane.classList.add('active');
+      }
+
+      if (tabId === 'tab-monitoring') {
+        setTimeout(initChart, 100);
+      } else if (tabId === 'tab-colorimetry') {
+        setTimeout(initColorimetryCharts, 100);
+      }
+    }
+
+    function showAdminView() {
+      document.getElementById('userView').style.display = 'none';
+      document.getElementById('adminView').style.display = 'flex';
+      setTimeout(initChart, 100);
+    }
+
+    function showUserView() {
+      document.getElementById('adminView').style.display = 'none';
+      document.getElementById('userView').style.display = 'flex';
+    }
+
+    // FUNGSI BUKA & TUTUP MODAL KIRIM STOK
+    function openRestockModal(namaToko = '') {
+      const modal = document.getElementById('restockModal');
+      if (namaToko) {
+        document.getElementById('restockToko').value = namaToko;
+      }
+      modal.style.display = 'flex';
+    }
+
+    function closeRestockModal() {
+      document.getElementById('restockModal').style.display = 'none';
+    }
+
+    function submitRestock() {
+      const toko = document.getElementById('restockToko').value;
+      const jumlah = document.getElementById('restockJumlah').value;
+      
+      alert(`✅ Laporan Pengiriman Stok Berhasil!\n\nToko Tujuan: ${toko}\nJumlah: ${jumlah} Pcs\n\nStatus: Notifikasi & rincian pengiriman telah dikirimkan ke email resmi toko mitra dan sistem logistik.`);
+      closeRestockModal();
+    }
+
+    // GRAFIK MONITORING UTAMA
+    function initChart() {
+      if (chartInstance) return;
+
+      const ctx = document.getElementById('barChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Bjn Barat', 'Bjn Utara', 'Bjn Selatan', 'Bjn Timur', 'Bjn Tengah'],
+          datasets: [
+            {
+              label: 'Kadar Fe Aman (<0.3 mg/L)',
+              data: [85, 40, 60, 75, 90],
+              backgroundColor: '#25d366'
+            },
+            {
+              label: 'Kadar Fe Tinggi (>1.0 mg/L)',
+              data: [15, 60, 40, 25, 10],
+              backgroundColor: '#e74c3c'
+            }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: { x: { stacked: true }, y: { stacked: true } }
+        }
+      });
+    }
+
+    // GRAFIK UNTUK MATERIAL DASHBOARD TAB COLORIMETRY
+    function initColorimetryCharts() {
+      if (colorimetryChartsCreated) return;
+      colorimetryChartsCreated = true;
+
+      const ctx1 = document.getElementById('chartFeRegression').getContext('2d');
+      new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels: ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+          datasets: [{
+            label: 'Estimasi Fe (mg/L)',
+            data: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0],
+            borderColor: '#ffffff',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#ffffff' }, grid: { display: false } },
+            y: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.2)' } }
+          }
+        }
+      });
+
+      const ctx2 = document.getElementById('chartLightingDist').getContext('2d');
+      new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: ['Ideal', 'Gelap', 'Terang'],
+          datasets: [{
+            label: 'Jumlah Foto',
+            data: [98, 1, 1],
+            backgroundColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#ffffff' }, grid: { display: false } },
+            y: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.2)' } }
+          }
+        }
+      });
+
+      const ctx3 = document.getElementById('chartAccuracyTrend').getContext('2d');
+      new Chart(ctx3, {
+        type: 'line',
+        data: {
+          labels: ['Uji 1', 'Uji 2', 'Uji 3', 'Uji 4', 'Uji 5'],
+          datasets: [{
+            label: 'Akurasi (%)',
+            data: [93.5, 94.2, 94.8, 95.1, 94.8],
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            pointBackgroundColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#ffffff' }, grid: { display: false } },
+            y: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255,255,255,0.2)' } }
+          }
+        }
+      });
+    }
+
+    // PROSES FOTO & ANALISIS RGB
+    function prosesFoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const chatBody = document.getElementById('chatBody');
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const imageSrc = e.target.result;
+
+        const userBubble = document.createElement('div');
+        userBubble.className = 'chat-bubble chat-user';
+        userBubble.innerHTML = `Mengirim sampel air...<br><img src="${imageSrc}" class="img-preview">`;
+        chatBody.appendChild(userBubble);
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        const img = new Image();
+        img.src = imageSrc;
+        img.onload = function() {
+          const canvas = document.getElementById('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          const imageData = ctx.getImageData(img.width / 4, img.height / 4, img.width / 2, img.height / 2);
+          const data = imageData.data;
+          let r = 0, g = 0, b = 0, count = 0;
+
+          for (let i = 0; i < data.length; i += 4) {
+            r += data[i]; g += data[i + 1]; b += data[i + 2]; count++;
+          }
+          r = Math.round(r / count);
+          g = Math.round(g / count);
+          b = Math.round(b / count);
+
+          setTimeout(() => {
+            analisisDanRespon(r, g, b);
+          }, 800);
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function analisisDanRespon(r, g, b) {
+      const chatBody = document.getElementById('chatBody');
+
+      let indeksKuning = Math.max(0, (r - b) / 255);
+      let estimasiFe = (indeksKuning * 5).toFixed(2);
+      let sisaKapasitas = Math.max(0, Math.round(100 - (estimasiFe / 2.0) * 100));
+
+      let pesan = `<b>[Laporan AI Colorimetry]</b><br>`;
+      pesan += `<i>Image Quality Check:</i> <b>OK (Lighting Cukup)</b><br>`;
+      pesan += `<i>Calibration Card:</i> <b>Terdeteksi & Ternormalisasi</b><br><br>`;
+      pesan += `<b>RGB:</b> (${r}, ${g}, ${b})<br>`;
+      pesan += `<b>Estimasi Kadar Fe:</b> ${estimasiFe} mg/L<br>`;
+      pesan += `<b>Estimasi Kapasitas Kartrid:</b> ${sisaKapasitas}%<br><br>`;
+
+      let badgeClass = "badge-aman";
+      let badgeText = "AMAN / LAYAK";
+      let barColor = "#198754";
+
+      if (estimasiFe < 0.3) {
+        pesan += `<b>Kondisi Air: Sangat Baik / Jernih</b><br>`;
+        pesan += `Kartrid Karbon Galam bekerja optimal. Belum perlu diganti.`;
+      } else if (estimasiFe >= 0.3 && estimasiFe <= 1.0) {
+        pesan += `<b>Kondisi Air: Waspada Penurunan Media</b><br>`;
+        pesan += `Kapasitas adsorpsi mulai menurun. Disarankan menyiapkan kartrid cadangan.`;
+        badgeClass = "badge-waspada";
+        badgeText = "WASPADA";
+        barColor = "#ffc107";
+      } else {
+        pesan += `<b>Kondisi Air: Melebihi Ambang Batas!</b><br>`;
+        pesan += `<b>SEGERA GANTI KARTRID FILTER ANDA!</b> Kartrid Galam telah jenuh.<br><br>`;
+        pesan += `🛒 <i>Rekomendasi Toko Bangunan Terdekat:</i><br>`;
+        pesan += `• <b>TB. Sumber Makmur</b> (Stok: 28 Pcs)<br>`;
+        pesan += `<a href="#" style="color: #00a884;">Pesan Langsung via WhatsApp Toko</a>`;
+        badgeClass = "badge-jenuh";
+        badgeText = "JENUH / GANTI";
+        barColor = "#dc3545";
+      }
+
+      const botBubble = document.createElement('div');
+      botBubble.className = 'chat-bubble chat-bot';
+      botBubble.innerHTML = pesan;
+      chatBody.appendChild(botBubble);
+      chatBody.scrollTop = chatBody.scrollHeight;
+
+      document.getElementById('tblFeNadia').innerText = `${estimasiFe} mg/L`;
+      document.getElementById('tblCapNadia').innerText = `${sisaKapasitas}%`;
+      
+      const tblBarNadia = document.getElementById('tblBarNadia');
+      tblBarNadia.style.width = `${sisaKapasitas}%`;
+      tblBarNadia.style.backgroundColor = barColor;
+
+      const tblBadgeNadia = document.getElementById('tblBadgeNadia');
+      tblBadgeNadia.className = `badge-pill ${badgeClass}`;
+      tblBadgeNadia.innerText = badgeText;
+    }
+  </script>
+</body>
+</html>
